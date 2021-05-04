@@ -1,7 +1,7 @@
 import express = require('express');
 import cors = require('cors');
 const pool = require('./sql');
-const dicts = require('./dict_repo');
+const dicts = require('./dictionary_repo');
 
 const dict = express.Router();
 dict.get('/:id', cors(), function(req, res){
