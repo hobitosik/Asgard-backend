@@ -1,6 +1,6 @@
 import express = require('express');
 import cors = require('cors');
-const pool = require('./sql');
+import {pool} from './sql';
 const dicts = require('./dictionary_repo');
 
 const dict = express.Router();

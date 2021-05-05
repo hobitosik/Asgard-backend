@@ -182,9 +182,6 @@ auth.post('/', cors(), jsonparser, async function (req, res) {
                 login: userLogin,
             }));
         }
-        // // удаляем старые сессии
-        // if(userId) await cleanOldTokens(userId);
-
     }
 });
 
