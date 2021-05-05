@@ -1,7 +1,6 @@
 import express = require('express');
-import cors = require('cors');
 import bodyParser = require('body-parser');
-
+const auth = require('./authtorization')
 const jsonparser = bodyParser.json();
 import fs from "fs";
 import multer from 'multer';
@@ -26,7 +25,7 @@ const fileFilter = (req, file, cb) => file && file.mimetype === 'image/jpeg' ? c
 const upload = multer({ storage: storage, fileFilter });
 
 const entity = express.Router();
-entity.get('/', cors(), function(req, res){
+entity.get('/', function(req, res){
     res.set('Content-Type', 'text/html'); 
     res.write('Эндпоинт для сущностей доступны следующие: <br>');
     Object.keys(entities).forEach( key => res.write(key + '<br>') );
@@ -149,7 +148,14 @@ function deleteEntity(req, res, next){
     }
 }
 
-function queryEntity( req, res, next ){
+async function queryEntity( req, res, next ){
+    const token = auth.getToken(req);
+    const uid = await auth.getUserIdByToken(token)
+    if(!uid) {
+        res.status(401);
+        res.send([]);
+        return
+    }
     console.log('ent repo config: ', entities, ' url params: ', req.params);
     if( !!entities[req.params.id] && !!entities[req.params.id].db_name ){
         const db = entities[req.params.id].db_name;
@@ -303,14 +309,14 @@ function downloadFile( req, res, next ){
 
 }
 
-entity.get('/:id', cors(), queryEntity);
-entity.get('/file/:id', cors(), downloadFile);
-entity.get('/:id/:eid', cors(), queryEntity);
-entity.post('/file', cors(), checkUploadsFS, upload.single('photo'), uploadFile);
-entity.delete('/:id', cors(), jsonparser, deleteEntity, function(req, res){
+entity.get('/:id', queryEntity);
+entity.get('/file/:id', downloadFile);
+entity.get('/:id/:eid', queryEntity);
+entity.post('/file', checkUploadsFS, upload.single('photo'), uploadFile);
+entity.delete('/:id', jsonparser, deleteEntity, function(req, res){
     res.end('delete done');
 });
-entity.post('/:id', cors(), jsonparser, createEntity, function(req, res){
+entity.post('/:id', jsonparser, createEntity, function(req, res){
     res.end('post done');
 });
 

@@ -1,10 +1,20 @@
 import express = require('express');
-import cors = require('cors');
 import {pool} from './sql';
+
 const dicts = require('./dictionary_repo');
+const auth = require('./authtorization')
 
 const dict = express.Router();
-dict.get('/:id', cors(), function(req, res){
+dict.get('/:id', async function(req, res){
+    const token = auth.getToken(req);
+    const uid = await auth.getUserIdByToken(token)
+    if(!uid) {
+        res.status(401);
+        res.send([]);
+        return
+    }
+
+    console.log('TOKEN: ', token, uid);
     if(!!dicts[req.params.id]){
 
         const dict = dicts[req.params.id];

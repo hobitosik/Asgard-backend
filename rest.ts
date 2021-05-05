@@ -14,6 +14,6 @@ function adminRootHandler(req, res){
 
 
 rest.use('/dict', cors(), dict);
-rest.use('/auth', cors(), auth);
+rest.use('/auth', cors(), auth.router);
 rest.use('/', cors(), entity);
 module.exports = rest;

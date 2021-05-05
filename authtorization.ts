@@ -1,12 +1,29 @@
 import express = require('express');
-import cors = require('cors');
 import {pool} from './sql';
 import uuid = require('uuid');
 import {IUser} from './models/user';
 import bodyParser = require('body-parser');
 const jsonparser = bodyParser.json();
 
-const getUserId = (login: string, password: string): Promise<number> => {
+exports.getToken = (req: any): string => {
+    return req?.headers?.['token'];
+}
+
+exports.getUserIdByToken = (token: string): Promise<number> => {
+    return new Promise((resolve, reject) => {
+        const q = `SELECT * FROM \`sessions\` WHERE token = "${token}"`;
+        pool.query(q, (err, result: IUser) => {
+            if(err){
+                reject(err);
+            } else {
+                console.log('user id RAW: ', result);
+                resolve(result[0]?.user_id);
+            }
+        });
+    })
+}
+
+const getUserIdByCredencial = (login: string, password: string): Promise<number> => {
     return new Promise((resolve, reject) => {
         const q = `SELECT * FROM \`users\` WHERE login = "${login}" AND password = "${password}"`;
         pool.query(q, (err, result: IUser) => {
@@ -111,9 +128,9 @@ auth.get('/uuid', function (req, res) {
     res.send({uuid: uuid.v4()});
 });
 
-auth.delete('/', cors(), jsonparser, async function (req, res) {
+auth.delete('/', jsonparser, async function (req, res) {
 
-    console.log('patch auth', req.headers);
+    console.log('delete auth', req.headers);
     const token: string = req?.headers?.token as string;
     if(token){
         await cleanCurrentSession(token);
@@ -131,14 +148,14 @@ auth.delete('/', cors(), jsonparser, async function (req, res) {
     }
 })
 
-auth.patch('/', cors(), jsonparser, async function (req, res) {
+auth.patch('/', jsonparser, async function (req, res) {
 
     console.log('patch auth', req.body);
     const userLogin: string = req.body['login'];
     const userPassword: string = req.body['password'];
     if(userLogin && userPassword){
         // получаем id юзера
-        const userId= await getUserId(userLogin, userPassword);
+        const userId= await getUserIdByCredencial(userLogin, userPassword);
         if(userId) {
             await changePasswordForUser(userLogin, userPassword);
             await cleanOldTokens(userId);
@@ -162,7 +179,7 @@ auth.patch('/', cors(), jsonparser, async function (req, res) {
     }
 });
 
-auth.put('/', cors(), jsonparser, async function (req, res) {
+auth.put('/', jsonparser, async function (req, res) {
 
     console.log('put auth', req.body);
     const userLogin: string = req.body['login'];
@@ -192,14 +209,14 @@ auth.put('/', cors(), jsonparser, async function (req, res) {
     }
 })
 
-auth.post('/', cors(), jsonparser, async function (req, res) {
+auth.post('/', jsonparser, async function (req, res) {
 
     console.log('post auth', req.body);
     const userLogin: string = req.body['login'];
     const userPassword: string = req.body['password'];
     if(userLogin && userPassword){
         // получаем id юзера
-        const userId = await getUserId(userLogin, userPassword);
+        const userId = await getUserIdByCredencial(userLogin, userPassword);
         console.log('login', userLogin, ' id: ', userId);
         if(userId) {
             const token = await createNewSession(userId);
@@ -216,7 +233,14 @@ auth.post('/', cors(), jsonparser, async function (req, res) {
                 login: userLogin,
             }));
         }
+    } else {
+        res.status(500);
+
+        res.send(JSON.stringify({
+            auth: false,
+            error: 'Не переданы необходимые данные для авторизации',
+        }));
     }
 });
 
-module.exports = auth;
+exports.router = auth;

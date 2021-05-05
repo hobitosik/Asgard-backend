@@ -1,9 +1,10 @@
 import express from 'express';
 const rest = require('./rest');
+const cors = require('cors');
 import fs from 'fs';
 
 let app = express();
-
+app.use(cors())
 app.use('/', rest);
 app.use('/static', express.static('/usr/src/app/uploads/',{ fallthrough: false }), (err, req, res, next) => {
     console.log('err static:', err);
