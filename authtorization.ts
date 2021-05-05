@@ -67,7 +67,7 @@ const cleanOldTokens = (userId: number): Promise<null> => {
 
 const cleanCurrentSession = (token: string): Promise<null> => {
     return new Promise((resolve, reject) => {
-        const q = `DELETE FROM \`sessions\` WHERE token = ${token}`;
+        const q = `DELETE FROM \`sessions\` WHERE token = "${token}"`;
         pool.query(q, (err, result) => {
             if(err){
                 reject(err);
