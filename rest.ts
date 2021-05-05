@@ -1,12 +1,15 @@
 import express from 'express';
 
 const dict = require('./dictionary_engine');
+const auth = require('./authtorization');
 
-let admin = express.Router();
-admin.get('/', adminRootHandler);
+let rest = express.Router();
+rest.get('/', adminRootHandler);
 
 function adminRootHandler(req, res){
     res.send('HELLO ADMIN ROOT');
 }
-admin.use('/dict', dict);
-module.exports = admin;
+rest.use('/dict', dict);
+rest.use('/auth', auth);
+
+module.exports = rest;

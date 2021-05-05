@@ -1,6 +1,6 @@
-let mysql = require('mysql');
-let host = process.env.HOST || 'localhost';
-module.exports = mysql.createPool({
+import { createPool } from 'mysql';
+const host = process.env.HOST || 'localhost';
+export const pool = createPool({
     connectionLimit: 100,
     host: host,
     user: 'asgard',
