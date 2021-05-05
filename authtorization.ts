@@ -48,6 +48,20 @@ const cleanOldTokens = (userId: number): Promise<null> => {
     });
 }
 
+const cleanCurrentSession = (token: string): Promise<null> => {
+    return new Promise((resolve, reject) => {
+        const q = `DELETE FROM \`sessions\` WHERE token = ${token}`;
+        pool.query(q, (err, result) => {
+            if(err){
+                reject(err);
+            } else {
+                console.log('clean token RAW: ', result);
+                resolve(null);
+            }
+        });
+    });
+}
+
 const createNewSession = (userId): Promise<string> => {
     return new Promise((resolve, reject) => {
         const token = uuid.v4();
@@ -97,6 +111,26 @@ auth.get('/uuid', function (req, res) {
     res.send({uuid: uuid.v4()});
 });
 
+auth.delete('/', cors(), jsonparser, async function (req, res) {
+
+    console.log('patch auth', req.headers);
+    const token: string = req?.headers?.token as string;
+    if(token){
+        await cleanCurrentSession(token);
+        res.send(JSON.stringify({
+            exit: true,
+            msg: 'Сессия завершениа',
+            token,
+        }));
+    } else {
+        res.status(500);
+        res.send(JSON.stringify({
+            exit: false,
+            error: 'Токен не передан',
+        }));
+    }
+})
+
 auth.patch('/', cors(), jsonparser, async function (req, res) {
 
     console.log('patch auth', req.body);
@@ -126,7 +160,7 @@ auth.patch('/', cors(), jsonparser, async function (req, res) {
             }));
         }
     }
-})
+});
 
 auth.put('/', cors(), jsonparser, async function (req, res) {
 
