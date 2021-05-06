@@ -6,6 +6,7 @@ export interface Entity{
     db_name: string,
     fk?: EntityForeignKey,
     fields: EntityField[],
+    userRequired?: boolean,
 }
 
 export interface EntityFilter {

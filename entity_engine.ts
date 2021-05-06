@@ -192,6 +192,7 @@ async function queryEntity( req, res, next ){
         const db = entities[req.params.id].db_name;
         const fields = entities[req.params.id].fields;
         const fk = entities[req.params.id].fk;
+        const needUser = entities[req.params.id].userRequired;
         const eid = req.params.eid;
 
         let limit = !!req.query.skip && Number(req.query.skip)  || '20';
@@ -224,10 +225,12 @@ async function queryEntity( req, res, next ){
             console.warn('в запросе поиска присутствуют неизвестные поля');
             return;
         }
+        let whereStr = '---';
+        if(needUser && uid) whereStr = ` \`user_id\` = ${uid} `;
 
         let likeStr = conSearchStrings.length && conSearchStrings.join(' AND ');
-        let whereStr = conSearchParams.length && conSearchParams.join(' AND ');
-
+        whereStr = (whereStr && conSearchParams.length ? whereStr + ' AND ' + conSearchParams.join(' AND ') : whereStr);
+        console.log('where:', whereStr, eid);
         let limstr = `${ !!req.query.skip ? ' LIMIT ' + limit + ' OFFSET ' + req.query.skip  :'' }`;
 
         let q: string;
@@ -255,7 +258,8 @@ async function queryEntity( req, res, next ){
                 ${whereStr ? 'AND ' + whereStr : ''} 
                 ${likeStr ? ' AND ' + likeStr : ''} 
                 ${limstr}`;
-        } else
+        } else {
+            console.log('+')
             q = `SELECT 
                 * 
                 FROM \`${ db }\` 
@@ -263,6 +267,8 @@ async function queryEntity( req, res, next ){
                 ${(whereStr && !eid) ? 'WHERE ' + whereStr : ''} 
                 ${likeStr ? ( whereStr ? ' AND ' : ' WHERE ') + likeStr : ''} 
                 ${limstr}`;
+        }
+
 
         console.log('q:', q);
 
