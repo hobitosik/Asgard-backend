@@ -123,24 +123,35 @@ function deleteEntity(req, res, next){
         //проверка наличия сущности в системе
         if( !!entities[req.params.id] && !!entities[req.params.id].db_name ){
             const db = entities[req.params.id].db_name;
-            const id = req.body && req.body.id;
+            const id = (req.params?.eid && +req.params?.eid) || req?.body?.id;
 
-            const qd = `DELETE FROM \`${ db }\` WHERE id=${id}`;
+            const qd = `DELETE FROM \`${ db }\` WHERE \'id\' = ${id}`;
+            console.log('delete q: ', qd);
 
-            pool.query(qd, (err, result)=> {
-                if(err) {
-                    res.status(500);
-                    res.send(err);
-                    return;
-                }
+            if(!!id){
+                pool.query(qd, (err, result)=> {
+                    if(err) {
+                        res.status(500);
+                        res.send(err);
+                        return;
+                    }
+                    res.send(JSON.stringify({
+                        result,
+                        text:`Запись с id = ${id} удалена`
+                    }));
+
+                    next();
+
+                });
+            } else {
+                res.status(500);
                 res.send(JSON.stringify({
-                    result,
-                    text:`Запись с id = ${id} удалена`
+                    error: 'Не передан ID удаляемой сущности',
                 }));
+            }
+            console.log('delete q: ', qd);
 
-                next();
 
-            });
 
         } else {
             res.end('не удалось определить сущность');
@@ -340,9 +351,7 @@ entity.get('/:id', queryEntity);
 entity.get('/file/:id', downloadFile);
 entity.get('/:id/:eid', queryEntity);
 entity.post('/file', checkUploadsFS, upload.single('photo'), uploadFile);
-entity.delete('/:id', jsonparser, deleteEntity, function(req, res){
-    res.end('delete done');
-});
+entity.delete('/:id/:eid', jsonparser, deleteEntity);
 entity.post('/:id', jsonparser, createEntity, function(req, res){
     res.end('post done');
 });
