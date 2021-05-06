@@ -60,7 +60,16 @@ function concatLikeFn(arrA, arrB){
     return [];
 }
 
-function createEntity(req, res, next){
+async function createEntity(req, res, next){
+    const token = auth.getToken(req);
+    const uid = await auth.getUserIdByToken(token);
+    const key = req.params.id;
+    if(!uid) {
+        res.status(401);
+        res.set('Content-Type', 'text/html');
+        res.send('401 Unauthorized');
+        return
+    }
     console.log('createEntity body:', req.body);
     if( req.body ){
         //проверка наличия сущности в системе
@@ -117,7 +126,16 @@ function createEntity(req, res, next){
     }
 }
 
-function deleteEntity(req, res, next){
+async function deleteEntity(req, res, next){
+    const token = auth.getToken(req);
+    const uid = await auth.getUserIdByToken(token);
+    const key = req.params.id;
+    if(!uid) {
+        res.status(401);
+        res.set('Content-Type', 'text/html');
+        res.send('401 Unauthorized');
+        return
+    }
     console.log('delete middle', req.body);
     if( req.body ){
         //проверка наличия сущности в системе
@@ -163,11 +181,12 @@ async function queryEntity( req, res, next ){
     const token = auth.getToken(req);
     const uid = await auth.getUserIdByToken(token);
     const key = req.params.id;
-    if(!uid) {
-        res.status(401);
-        res.send([]);
-        return
-    }
+    // if(!uid) {
+    //     res.status(401);
+    //     res.set('Content-Type', 'text/html');
+    //     res.send('401 Unauthorized');
+    //     return
+    // }
     console.log('ent repo config: ', entities, ' url params: ', req.params);
     if( key && entities[key]?.db_name ){
         const db = entities[req.params.id].db_name;
