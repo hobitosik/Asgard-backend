@@ -125,7 +125,7 @@ function deleteEntity(req, res, next){
             const db = entities[req.params.id].db_name;
             const id = (req.params?.eid && +req.params?.eid) || req?.body?.id;
 
-            const qd = `DELETE FROM \`${ db }\` WHERE \'id\' = ${id}`;
+            const qd = `DELETE FROM \`${ db }\` WHERE \`id\` = ${id}`;
             console.log('delete q: ', qd);
 
             if(!!id){
@@ -161,14 +161,15 @@ function deleteEntity(req, res, next){
 
 async function queryEntity( req, res, next ){
     const token = auth.getToken(req);
-    const uid = await auth.getUserIdByToken(token)
+    const uid = await auth.getUserIdByToken(token);
+    const key = req.params.id;
     if(!uid) {
         res.status(401);
         res.send([]);
         return
     }
     console.log('ent repo config: ', entities, ' url params: ', req.params);
-    if( !!entities[req.params.id] && !!entities[req.params.id].db_name ){
+    if( key && entities[key]?.db_name ){
         const db = entities[req.params.id].db_name;
         const fields = entities[req.params.id].fields;
         const fk = entities[req.params.id].fk;
@@ -251,7 +252,11 @@ async function queryEntity( req, res, next ){
                 res.status(500);
                 res.send(JSON.stringify(err));
             } else{
-                res.send(result);
+                res.send({
+                    data: result,
+                    meta: fields,
+                    entkey: key,
+                });
             }
 
         });
