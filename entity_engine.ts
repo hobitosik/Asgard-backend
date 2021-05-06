@@ -160,6 +160,7 @@ async function queryEntity( req, res, next ){
     if( !!entities[req.params.id] && !!entities[req.params.id].db_name ){
         const db = entities[req.params.id].db_name;
         const fields = entities[req.params.id].fields;
+        const fk = entities[req.params.id].fk;
         const eid = req.params.eid;
 
         let limit = !!req.query.skip && Number(req.query.skip)  || '20';
@@ -198,7 +199,33 @@ async function queryEntity( req, res, next ){
 
         let limstr = `${ !!req.query.skip ? ' LIMIT ' + limit + ' OFFSET ' + req.query.skip  :'' }`;
 
-        const q = `SELECT 
+        let q: string;
+
+        //link fk for parent table
+        if( fk ){
+            //searching keys
+            let s_str = fk.restrictors.map(r => fk.db + '.' + r.key).join(', ');
+            //restrictor statements
+            let r_str = fk.restrictors.map(r => fk.db + '.' + r.key + ' LIKE "' + r.value + '"').join(', ');
+            //target fields db
+            let t_str = fk.target.map(t => fk.db + '.' + t).join(', ');
+
+
+            q = `SELECT 
+                ${db}.*, 
+                ${fk.db}.id as _id, 
+                ${s_str}, 
+                ${t_str} 
+                FROM ${db} 
+                INNER JOIN ${fk.db} 
+                ON ${db}.${fk.key} = ${fk.db}.id 
+                WHERE ${r_str} 
+                ${ eid ? `AND ${db}.id = ${eid}` : ``} 
+                ${whereStr ? 'AND ' + whereStr : ''} 
+                ${likeStr ? ' AND ' + likeStr : ''} 
+                ${limstr}`;
+        } else
+            q = `SELECT 
                 * 
                 FROM \`${ db }\` 
                 ${ eid ? `WHERE id = ${ eid }` : ``}

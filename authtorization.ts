@@ -206,6 +206,13 @@ auth.put('/', jsonparser, async function (req, res) {
                 login: userLogin,
             }));
         }
+    } else {
+        res.status(500);
+
+        res.send(JSON.stringify({
+            signup: false,
+            error: 'Не переданы необходимые данные для регистрации',
+        }));
     }
 })
 
