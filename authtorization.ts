@@ -98,7 +98,7 @@ const createNewSession = (userId): Promise<string> => {
 const createNewUser = (userLogin: string, userPassword: string): Promise<number> => {
     return new Promise((resolve, reject) => {
         const token = uuid.v4();
-        const q = `INSERT INTO \`users\` (\`login\`, \`password\`) VALUES("${userLogin}",${userPassword})`;
+        const q = `INSERT INTO \`users\` (\`login\`, \`password\`) VALUES("${userLogin}", "${userPassword}")`;
         pool.query(q, (err, result) => {
             if(err){
                 reject(err);
