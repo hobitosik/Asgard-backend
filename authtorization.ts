@@ -11,7 +11,7 @@ exports.getToken = (req: any): string => {
 
 exports.getUserIdByToken = (token: string): Promise<number> => {
     return new Promise((resolve, reject) => {
-        const q = `SELECT * FROM \`sessions\` WHERE token = "${token}"`;
+        const q = `SELECT * FROM \`sessions\` WHERE \`token\` = "${token}"`;
         pool.query(q, (err, result: IUser) => {
             if(err){
                 reject(err);
@@ -25,7 +25,7 @@ exports.getUserIdByToken = (token: string): Promise<number> => {
 
 const getUserIdByCredencial = (login: string, password: string): Promise<number> => {
     return new Promise((resolve, reject) => {
-        const q = `SELECT * FROM \`users\` WHERE login = "${login}" AND password = "${password}"`;
+        const q = `SELECT * FROM \`users\` WHERE \`login\` = "${login}" AND password = "${password}"`;
         pool.query(q, (err, result: IUser) => {
             if(err){
                 reject(err);
@@ -39,7 +39,8 @@ const getUserIdByCredencial = (login: string, password: string): Promise<number>
 
 const checkUserExist = (login: string): Promise<boolean> => {
     return new Promise((resolve, reject) => {
-        const q = `SELECT * FROM \`users\` WHERE login = "${login}"`;
+        const q = `SELECT * FROM \`users\` WHERE \`login\` = "${login}"`;
+        console.log('q: ', q);
         pool.query(q, (err, result: IUser) => {
             if(err){
                 reject(err);
@@ -53,7 +54,7 @@ const checkUserExist = (login: string): Promise<boolean> => {
 
 const cleanOldTokens = (userId: number): Promise<null> => {
     return new Promise((resolve, reject) => {
-        const q = `DELETE FROM \`sessions\` WHERE user_id = ${userId}`;
+        const q = `DELETE FROM \`sessions\` WHERE \`user_id\` = ${userId}`;
         pool.query(q, (err, result) => {
             if(err){
                 reject(err);
@@ -67,7 +68,7 @@ const cleanOldTokens = (userId: number): Promise<null> => {
 
 const cleanCurrentSession = (token: string): Promise<null> => {
     return new Promise((resolve, reject) => {
-        const q = `DELETE FROM \`sessions\` WHERE token = "${token}"`;
+        const q = `DELETE FROM \`sessions\` WHERE \`token\` = "${token}"`;
         pool.query(q, (err, result) => {
             if(err){
                 reject(err);
