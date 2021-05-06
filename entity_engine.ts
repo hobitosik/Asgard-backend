@@ -225,12 +225,12 @@ async function queryEntity( req, res, next ){
             console.warn('в запросе поиска присутствуют неизвестные поля');
             return;
         }
-        let whereStr = '---';
-        if(needUser && uid) whereStr = ` \`user_id\` = ${uid} `;
+        let whereStr = '';
+        if(needUser && uid && !eid) whereStr = ` \`user_id\` = ${uid} `;
 
         let likeStr = conSearchStrings.length && conSearchStrings.join(' AND ');
         whereStr = (whereStr && conSearchParams.length ? whereStr + ' AND ' + conSearchParams.join(' AND ') : whereStr);
-        console.log('where:', whereStr, eid);
+
         let limstr = `${ !!req.query.skip ? ' LIMIT ' + limit + ' OFFSET ' + req.query.skip  :'' }`;
 
         let q: string;
