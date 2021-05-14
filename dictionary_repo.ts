@@ -3,4 +3,5 @@ module.exports = {
     canopy_model: { db: 'canopy_model' },
     aad_model: { db: 'aad_model' },
     aad_brand: { db: 'aad_brand' },
+    aircraft: { db: 'aircraft' },
 };
