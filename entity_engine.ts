@@ -194,6 +194,11 @@ async function queryEntity( req, res, next ){
         const fk = entities[req.params.id].fk;
         const needUser = entities[req.params.id].userRequired;
         const eid = req.params.eid;
+        if(eid && isNaN(Number(eid))){
+            res.status(500);
+            res.send(JSON.stringify({error: 'Неверный ID сущности'}));
+            return;
+        }
 
         let limit = !!req.query.skip && Number(req.query.skip)  || '20';
 
@@ -277,9 +282,13 @@ async function queryEntity( req, res, next ){
                 res.status(500);
                 res.send(JSON.stringify(err));
             } else{
+                const total = result && result.length || 0;
                 res.send({
                     data: result,
-                    meta: fields,
+                    meta: {
+                        total,
+                        fields,
+                    },
                     entkey: key,
                 });
             }
@@ -376,7 +385,21 @@ function downloadFile( req, res, next ){
     });
 
 }
-
+entity.get('/:id/meta', function(req, res){
+    if( !!entities[req.params.id] && !!entities[req.params.id].db_name ){
+        pool.query(`SELECT * FROM \`${ entities[req.params.id].db_name }\``, (err, result)=> {
+            const lenSet = result && result.length || 0;
+            res.send({
+                meta: {
+                    total: lenSet,
+                    fields: entities[req.params.id].fields  || [],
+                },
+            });
+        });
+    } else {
+        res.send([]);
+    }
+});
 entity.get('/:id', queryEntity);
 entity.get('/file/:id', downloadFile);
 entity.get('/:id/:eid', queryEntity);
