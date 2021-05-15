@@ -24,7 +24,14 @@ export interface EntityFilter {
 
 export interface EntityField {
     key: string,
-    type: string,
+    type: 'flag'    |
+        'number'    |
+        'text'      |
+        'textarea'  |
+        'id'        |
+        'dict'      |
+        'range'     |
+        'datetime',
     title?: string,
     dctKey?: string,
     useDict?: boolean,

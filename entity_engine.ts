@@ -94,7 +94,7 @@ async function createEntity(req, res, next){
             let valArr = Object.keys(data).map(datakey => {
                 const targetReq = fields.find(r => r.key === datakey);
                 if(!targetReq) return `"${data[datakey]}"`;
-                return targetReq.type === 'string' || targetReq.type === 'text' ? `"${data[datakey]}"` : data[datakey];
+                return targetReq.type === 'text' || targetReq.type === 'textarea' ? `"${data[datakey]}"` : data[datakey];
             });
 
             let existArr = concatFn( Object.keys(data), valArr );
@@ -202,20 +202,17 @@ async function queryEntity( req, res, next ){
 
         let limit = !!req.query.skip && Number(req.query.skip)  || '20';
 
-        // проработать логику поиска типа поля запроса
+        const searchFieldKeys = Object.keys(req.query).filter(k =>
+            !(k === 'skip' || k === 'limit') && (fields.some(f => f.key === k)));
 
-        let searchParamsKeys = Object.keys(req.query).filter(k =>
-            !( k === 'skip' || k === 'limit' ) &&
-            ( fields.some(f => f.key === k) && fields.find(f => f.key === k).type === 'id' )
-        );
-
+        let searchParamsKeys = searchFieldKeys.filter(k => fields.find(f => f.key === k).type === 'id' );
         let searchParamsValue = searchParamsKeys.map( k => req.query[k] );
 
         let conSearchParams = concatFn( searchParamsKeys, searchParamsValue );
 
-        let searchStringKeys = Object.keys(req.query).filter(k =>
-            !( k === 'skip' || k === 'limit' ) &&
-            ( fields.some(f => f.key === k) && fields.find(f => f.key === k).type === 'string' )
+        let searchStringKeys = searchFieldKeys.filter(k =>
+            fields.find(f => f.key === k).type === 'text' ||
+            fields.find(f => f.key === k).type === 'textarea'
         );
 
         let searchStringValue = searchStringKeys.map(k => `${req.query[k]}` );
@@ -234,7 +231,7 @@ async function queryEntity( req, res, next ){
         if(needUser && uid && !eid) whereStr = ` \`user_id\` = ${uid} `;
 
         let likeStr = conSearchStrings.length && conSearchStrings.join(' AND ');
-        whereStr = (whereStr && conSearchParams.length ? whereStr + ' AND ' + conSearchParams.join(' AND ') : whereStr);
+        whereStr = (whereStr && conSearchParams.length ? whereStr + ' AND ' + conSearchParams.join(' AND ') : conSearchParams.join(' AND '));
 
         let limstr = `${ !!req.query.skip ? ' LIMIT ' + limit + ' OFFSET ' + req.query.skip  :'' }`;
 
