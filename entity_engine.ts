@@ -4,10 +4,12 @@ const auth = require('./authtorization')
 const jsonparser = bodyParser.json();
 import fs from "fs";
 import multer from 'multer';
+import validator from 'validator';
 
 import { entityRepo } from './entity_repo';
 import {pool} from './sql';
 const entities = entityRepo;
+const sanitizer = validator.escape;
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -93,8 +95,8 @@ async function createEntity(req, res, next){
 
             let valArr = Object.keys(data).map(datakey => {
                 const targetReq = fields.find(r => r.key === datakey);
-                if(!targetReq) return `"${data[datakey]}"`;
-                return targetReq.type === 'text' || targetReq.type === 'textarea' ? `"${data[datakey]}"` : data[datakey];
+                if(!targetReq) return ;`"${sanitizer((data[datakey]).toString())}"`;
+                return targetReq.type === 'textarea' || targetReq.type === 'text' ? `"${sanitizer((data[datakey]).toString())}"` : data[datakey];
             });
 
             let existArr = concatFn( Object.keys(data), valArr );
@@ -280,6 +282,16 @@ async function queryEntity( req, res, next ){
                 res.send(JSON.stringify(err));
             } else{
                 const total = result && result.length || 0;
+
+                result.forEach(row => {
+                    Object.keys(row).forEach(k => {
+                        const targetReq = fields.find(r => r.key === k);
+                        if(targetReq?.type === 'textarea' || targetReq?.type === 'text'){
+                            row[k] = validator.unescape(`${row[k]}`);
+                        }
+                    })
+                });
+
                 res.send({
                     data: result,
                     meta: {
